@@ -1,47 +1,47 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "blemli/partysan",
+    "description": "stop wishing and start building",
     "keywords": [
-        ":vendor_name",
+        "blemli",
         "laravel",
-        ":package_slug"
+        "partysan"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/blemli/partysan",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "blemli",
+            "email": "apps@problem.li",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.4",
-        "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0||^13.0"
+        "illuminate/contracts": "^11.0||^12.0||^13.0",
+        "joshembling/artisan-browse": "^0.0.7",
+        "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
-        "larastan/larastan": "^3.0",
         "orchestra/testbench": "^11.0.0||^10.0.0||^9.0.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-arch": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0",
-        "spatie/laravel-ray": "^1.35"
+        "phpstan/phpstan-phpunit": "^2.0"
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Blemli\\Partysan\\": "src/",
+            "Blemli\\Partysan\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Blemli\\Partysan\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Blemli\\Partysan\\PartysanServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "Partysan": "Blemli\\Partysan\\Facades\\Partysan"
             }
         }
     },
