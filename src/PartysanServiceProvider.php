@@ -2,6 +2,7 @@
 
 namespace Blemli\Partysan;
 
+use Blemli\Partysan\Commands\DbCreateCommand;
 use Blemli\Partysan\Commands\PluginSwitchCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -18,6 +19,7 @@ class PartysanServiceProvider extends PackageServiceProvider
         $package
             ->name('partysan')
             ->hasConfigFile('depswitch')
-            ->hasCommand(PluginSwitchCommand::class);
+            ->hasCommand(PluginSwitchCommand::class)
+            ->hasCommand(DbCreateCommand::class);
     }
 }

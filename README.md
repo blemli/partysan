@@ -20,4 +20,38 @@ just run `php artisan browse` and have fun.
 
 ## Commands
 
-`browse`, `plugin:switch`
+`browse`, `plugin:switch`, `db:create`
+
+### db:create
+
+Create the database for a connection if it does not exist yet. Supports all first-party Laravel drivers: `sqlite`, `mysql`, `mariadb`, `pgsql` and `sqlsrv`.
+
+```bash
+# create the database of the default connection
+php artisan db:create
+
+# create a specific database on a specific connection
+php artisan db:create my_database --connection=pgsql
+
+# mysql/mariadb charset & collation (defaults to the connection config)
+php artisan db:create --charset=utf8mb4 --collation=utf8mb4_unicode_ci
+
+# use a privileged account when the app user may not create databases
+php artisan db:create --admin-user=root --admin-password=secret
+
+# skip the confirmation prompt in production
+php artisan db:create --force
+```
+
+For `sqlite` the database file (including missing parent directories) is created. For the server drivers the command connects to the server's maintenance database (`postgres` for pgsql, `master` for sqlsrv) with the connection's credentials — or the given admin credentials — and issues a `CREATE DATABASE` if it is missing.
+
+### plugin:switch
+
+Switch a composer dependency between local symlink, VCS (git) and Packagist sources:
+
+```bash
+php artisan plugin:switch                          # interactive
+php artisan plugin:switch vendor/package --local   # symlink a local checkout
+php artisan plugin:switch vendor/package --vcs     # use a git repo/branch
+php artisan plugin:switch vendor/package --packagist  # reset to Packagist
+```
