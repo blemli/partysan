@@ -12,10 +12,10 @@ use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\suggest;
 
-#[AsCommand(name: 'package:switch')]
-class PackageSwitchCommand extends Command
+#[AsCommand(name: 'dependency:switch')]
+class DependencySwitchCommand extends Command
 {
-    protected $signature = 'package:switch
+    protected $signature = 'dependency:switch
                             {package? : The package name (e.g., awcodes/overlook)}
                             {--local : Switch to local symlink}
                             {--vcs : Switch to VCS (git) repository}

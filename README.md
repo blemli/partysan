@@ -20,7 +20,7 @@ just run `php artisan browse` and have fun.
 
 ## Commands
 
-`browse`, `package:switch`, `db:create`, `open`
+`browse`, `dependency:switch`, `db:create`, `open`
 
 ### db:create
 
@@ -59,13 +59,13 @@ php artisan open --env=production
 
 With `--env=<environment>` the URL is read directly from `.env.<environment>` in the project root, so it works even when the config is cached. Fails with a clear error if the file does not exist or has no `APP_URL`.
 
-### package:switch
+### dependency:switch
 
 Switch a composer dependency between local symlink, VCS (git) and Packagist sources:
 
 ```bash
-php artisan package:switch                          # interactive
-php artisan package:switch vendor/package --local   # symlink a local checkout
-php artisan package:switch vendor/package --vcs     # use a git repo/branch
-php artisan package:switch vendor/package --packagist  # reset to Packagist
+php artisan dependency:switch                          # interactive
+php artisan dependency:switch vendor/package --local   # symlink a local checkout
+php artisan dependency:switch vendor/package --vcs     # use a git repo/branch
+php artisan dependency:switch vendor/package --packagist  # reset to Packagist
 ```
