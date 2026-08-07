@@ -20,7 +20,7 @@ just run `php artisan browse` and have fun.
 
 ## Commands
 
-`browse`, `plugin:switch`, `db:create`
+`browse`, `package:switch`, `db:create`
 
 ### db:create
 
@@ -45,13 +45,13 @@ php artisan db:create --force
 
 For `sqlite` the database file (including missing parent directories) is created. For the server drivers the command connects to the server's maintenance database (`postgres` for pgsql, `master` for sqlsrv) with the connection's credentials — or the given admin credentials — and issues a `CREATE DATABASE` if it is missing.
 
-### plugin:switch
+### package:switch
 
 Switch a composer dependency between local symlink, VCS (git) and Packagist sources:
 
 ```bash
-php artisan plugin:switch                          # interactive
-php artisan plugin:switch vendor/package --local   # symlink a local checkout
-php artisan plugin:switch vendor/package --vcs     # use a git repo/branch
-php artisan plugin:switch vendor/package --packagist  # reset to Packagist
+php artisan package:switch                          # interactive
+php artisan package:switch vendor/package --local   # symlink a local checkout
+php artisan package:switch vendor/package --vcs     # use a git repo/branch
+php artisan package:switch vendor/package --packagist  # reset to Packagist
 ```
