@@ -11,7 +11,6 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\suggest;
-use function Laravel\Prompts\text;
 
 #[AsCommand(name: 'plugin:switch')]
 class PluginSwitchCommand extends Command
@@ -514,15 +513,6 @@ class PluginSwitchCommand extends Command
 
         $this->saveOriginalConstraint($package);
 
-        $defaultBranch = $this->stateData['packages'][$package]['branch']
-            ?? config('depswitch.default_branch', 'main');
-
-        $branch = $this->option('branch') ?: text(
-            label: 'Branch name',
-            default: $defaultBranch,
-            required: true,
-        );
-
         $repoKey = $this->getRepoKey($package);
 
         if ($useUpstream) {
@@ -530,6 +520,16 @@ class PluginSwitchCommand extends Command
         } else {
             $repoUrl = "https://github.com/{$org}/{$packageName}";
         }
+
+        $defaultBranch = $this->stateData['packages'][$package]['branch']
+            ?? config('depswitch.default_branch', 'main');
+
+        $branch = $this->option('branch') ?: suggest(
+            label: 'Branch name',
+            options: $this->getRemoteBranches($repoUrl),
+            default: $defaultBranch,
+            required: true,
+        );
 
         $isDirect = $this->isDirectDependency($package);
 
@@ -758,6 +758,34 @@ class PluginSwitchCommand extends Command
             fn ($branch) => preg_replace('#^origin/#', '', $branch),
             $branches
         )));
+    }
+
+    /**
+     * List branches of a remote repository without cloning it.
+     *
+     * @return array<string>
+     */
+    private function getRemoteBranches(string $repoUrl): array
+    {
+        $result = Process::env(['GIT_TERMINAL_PROMPT' => '0'])
+            ->timeout(10)
+            ->run('git ls-remote --heads '.escapeshellarg($repoUrl));
+
+        if ($result->failed()) {
+            return [];
+        }
+
+        $branches = [];
+
+        foreach (explode("\n", $result->output()) as $line) {
+            if (preg_match('#refs/heads/(.+)$#', trim($line), $matches)) {
+                $branches[] = $matches[1];
+            }
+        }
+
+        sort($branches);
+
+        return $branches;
     }
 
     private function detectIfLocalIsFork(string $path, string $package): bool
