@@ -20,7 +20,7 @@ just run `php artisan browse` and have fun.
 
 ## Commands
 
-`browse`, `package:switch`, `db:create`
+`browse`, `package:switch`, `db:create`, `open`
 
 ### db:create
 
@@ -44,6 +44,20 @@ php artisan db:create --force
 ```
 
 For `sqlite` the database file (including missing parent directories) is created. For the server drivers the command connects to the server's maintenance database (`postgres` for pgsql, `master` for sqlsrv) with the connection's credentials — or the given admin credentials — and issues a `CREATE DATABASE` if it is missing.
+
+### open
+
+Open the app in your browser (also available as `visit`):
+
+```bash
+# open the current APP_URL (config('app.url'))
+php artisan open
+
+# open the APP_URL from .env.production
+php artisan open --env=production
+```
+
+With `--env=<environment>` the URL is read directly from `.env.<environment>` in the project root, so it works even when the config is cached. Fails with a clear error if the file does not exist or has no `APP_URL`.
 
 ### package:switch
 
