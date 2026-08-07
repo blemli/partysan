@@ -6,5 +6,7 @@ parameters:
     paths:
         - src
         - config
-        - database
+    # This is a package, not an app, so larastan cannot infer config_path().
+    configDirectories:
+        - %currentWorkingDirectory%/config
     tmpDir: build/phpstan
