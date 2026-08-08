@@ -23,7 +23,8 @@ class DependencySwitchCommand extends Command
                             {--branch= : Branch name for local/vcs}
                             {--org= : Override GitHub org for VCS}
                             {--upstream : Clone/use upstream repo instead of fork}
-                            {--transitive : Include transitive dependencies}';
+                            {--transitive : Include transitive dependencies}
+                            {--list : List dependencies and their current source}';
 
     protected $description = 'Switch a dependency between local, VCS, and Packagist sources';
 
@@ -36,6 +37,10 @@ class DependencySwitchCommand extends Command
     {
         $this->stateFile = base_path('.depswitch.json');
         $this->loadState();
+
+        if ($this->option('list')) {
+            return $this->listPackages();
+        }
 
         $this->checkPrStatuses();
 
@@ -170,6 +175,72 @@ class DependencySwitchCommand extends Command
             $this->line("   <fg=gray>{$title}</>");
             $this->line("   <fg=blue;options=underscore>{$url}</>");
         }
+    }
+
+    private function listPackages(): int
+    {
+        $filter = match (true) {
+            (bool) $this->option('local') => 'local',
+            (bool) $this->option('vcs') => 'vcs',
+            (bool) $this->option('packagist') => 'packagist',
+            default => 'all',
+        };
+
+        $packages = $this->getPackages($filter);
+
+        if (empty($packages)) {
+            $this->components->warn('No packages found for filter: '.$filter);
+
+            return self::SUCCESS;
+        }
+
+        ksort($packages);
+
+        $rows = [];
+
+        foreach (array_keys($packages) as $name) {
+            $rows[] = [
+                $name,
+                $this->detectCurrentMode($name),
+                $this->stateData['packages'][$name]['branch'] ?? '',
+                $this->formatPrStatus($name),
+            ];
+        }
+
+        $this->table(['Package', 'Mode', 'Branch', 'PR'], $rows);
+
+        return self::SUCCESS;
+    }
+
+    private function formatPrStatus(string $package): string
+    {
+        $data = $this->stateData['packages'][$package] ?? [];
+        $mode = $data['mode'] ?? null;
+        $branch = $data['branch'] ?? null;
+        $org = $data['org'] ?? $this->getGitHubOrg();
+
+        if (! in_array($mode, ['local', 'vcs']) || ! $branch) {
+            return '';
+        }
+
+        $pr = $this->fetchPrStatus($package, $org, $branch);
+
+        if (! $pr) {
+            return '';
+        }
+
+        $number = $pr['number'] ?? '?';
+        $state = strtolower($pr['state'] ?? '');
+
+        $status = match (true) {
+            $state === 'merged' => 'merged',
+            ($pr['reviewDecision'] ?? null) === 'CHANGES_REQUESTED' => 'changes requested',
+            ! empty($pr['reviewRequests']) => 'awaiting review',
+            ($pr['reviewDecision'] ?? null) === 'APPROVED' => 'approved',
+            default => $state,
+        };
+
+        return "#{$number} {$status}";
     }
 
     private function selectPackageInteractively(): ?string

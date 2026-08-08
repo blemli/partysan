@@ -68,4 +68,7 @@ php artisan dependency:switch                          # interactive
 php artisan dependency:switch vendor/package --local   # symlink a local checkout
 php artisan dependency:switch vendor/package --vcs     # use a git repo/branch
 php artisan dependency:switch vendor/package --packagist  # reset to Packagist
+php artisan dependency:switch --list                   # list dependencies and their source
 ```
+
+`--list` prints every dependency with its current mode, branch and PR status. The PR column is looked up via `gh` for switched packages only, so the listing stays fast; it is left empty when `gh` is unavailable. Combine `--list` with `--local`, `--vcs` or `--packagist` to filter by source, and with `--transitive` to include transitive dependencies.
