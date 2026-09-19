@@ -3,14 +3,18 @@
 namespace Blemli\Partysan;
 
 use Blemli\Partysan\Rename\Plugins\ClearCachesPlugin;
+use Blemli\Partysan\Rename\Plugins\ComposePlugin;
 use Blemli\Partysan\Rename\Plugins\ComposerPlugin;
 use Blemli\Partysan\Rename\Plugins\DirectoryPlugin;
 use Blemli\Partysan\Rename\Plugins\EnvFilesPlugin;
 use Blemli\Partysan\Rename\Plugins\ForgePlugin;
 use Blemli\Partysan\Rename\Plugins\GitHubPlugin;
+use Blemli\Partysan\Rename\Plugins\HerdPlugin;
+use Blemli\Partysan\Rename\Plugins\IdePlugin;
 use Blemli\Partysan\Rename\Plugins\KamalPlugin;
 use Blemli\Partysan\Rename\Plugins\NamespacePlugin;
 use Blemli\Partysan\Rename\Plugins\OnePasswordPlugin;
+use Blemli\Partysan\Rename\Plugins\ReadmePlugin;
 use Blemli\Partysan\Rename\Plugins\ResidualScanPlugin;
 use Blemli\Partysan\Rename\RenamePlugin;
 
@@ -20,14 +24,18 @@ class Partysan
     public const RENAME_PLUGINS = [
         EnvFilesPlugin::class,
         ComposerPlugin::class,
+        ReadmePlugin::class,
         NamespacePlugin::class,
         KamalPlugin::class,
+        ComposePlugin::class,
         OnePasswordPlugin::class,
         ForgePlugin::class,
+        IdePlugin::class,
         GitHubPlugin::class,
         ResidualScanPlugin::class,
         ClearCachesPlugin::class,
         DirectoryPlugin::class,
+        HerdPlugin::class,
     ];
 
     /** @var list<class-string<RenamePlugin>|RenamePlugin> */

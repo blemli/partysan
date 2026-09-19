@@ -7,8 +7,8 @@ use Blemli\Partysan\Rename\RenameContext;
 use Illuminate\Support\Facades\Process;
 
 /**
- * Renames the GitHub repository with `gh repo rename`, which also updates the
- * local origin remote.
+ * Renames the GitHub repository with `gh repo rename` and makes sure the local
+ * origin remote points at the new URL afterwards.
  */
 class GitHubPlugin extends BasePlugin
 {
@@ -60,6 +60,31 @@ class GitHubPlugin extends BasePlugin
         }
 
         $this->renamed = true;
+        $this->updateRemote($context, $remote, $repository, $new);
+    }
+
+    /**
+     * gh updates origin itself in the common case; fall back to set-url when it did not.
+     */
+    protected function updateRemote(RenameContext $context, string $oldRemote, string $repository, string $new): void
+    {
+        $expected = preg_replace('/'.preg_quote($repository, '/').'(\.git)?$/', $new.'$1', $oldRemote) ?? $oldRemote;
+
+        if ($context->dryRun) {
+            $context->record("would point origin at {$expected}");
+
+            return;
+        }
+
+        $current = trim(Process::path($context->basePath)->run(['git', 'remote', 'get-url', 'origin'])->output());
+
+        if ($current === $expected) {
+            $context->record("origin now points at {$expected}");
+
+            return;
+        }
+
+        $context->run(['git', 'remote', 'set-url', 'origin', $expected]);
     }
 
     public function checklist(RenameContext $context): array

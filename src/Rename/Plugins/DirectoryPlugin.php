@@ -47,6 +47,7 @@ class DirectoryPlugin extends BasePlugin
 
         if ($context->move($context->basePath, $target)) {
             $this->target = $target;
+            $context->movedTo = $target;
         }
     }
 

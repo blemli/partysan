@@ -283,6 +283,8 @@ class RenameCommand extends Command
     protected function generalChecklist(): array
     {
         return [
+            'Cache, Redis and Horizon prefixes derive from APP_NAME: drain the queues before deploying, or jobs queued under the old prefix are never picked up.',
+            'Processes started from the old directory (queue workers, Horizon, `artisan serve`, the Vite dev server, IDE terminals) keep the old cwd: restart them.',
             'Local dev domains, hosts entries, DNS records and TLS certificates for the new hostname.',
             'Hosting platforms without an API hook (e.g. Laravel Cloud): rename the application, environment, custom domain and database in their dashboard.',
             'Third parties that know the app by name: OAuth apps and callback URLs, mail sender domains, error tracking, uptime monitors, container registries.',

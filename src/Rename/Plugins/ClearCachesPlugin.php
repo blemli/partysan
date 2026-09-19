@@ -22,7 +22,7 @@ class ClearCachesPlugin extends BasePlugin
 
     public function run(RenameContext $context): void
     {
-        foreach (['config:clear', 'route:clear', 'view:clear'] as $command) {
+        foreach (['config:clear', 'route:clear', 'view:clear', 'event:clear', 'clear-compiled'] as $command) {
             if ($context->dryRun) {
                 $context->record("would run: artisan {$command}");
 

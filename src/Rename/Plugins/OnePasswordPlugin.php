@@ -52,39 +52,46 @@ class OnePasswordPlugin extends BasePlugin
         }
 
         $items = json_decode($result->output(), true);
-        $renamed = 0;
+        $candidates = [];
 
         foreach (is_array($items) ? $items : [] as $item) {
             $title = (string) ($item['title'] ?? '');
             $urls = array_map(fn ($url) => (string) ($url['href'] ?? ''), $item['urls'] ?? []);
             $primary = collect($item['urls'] ?? [])->firstWhere('primary', true)['href'] ?? ($urls[0] ?? null);
 
-            $titleMatches = $context->old->matches($title);
-            $urlMatches = is_string($primary) && $context->old->matches($primary);
+            $primary = is_string($primary) ? $primary : null;
+            $newUrl = $primary !== null && $context->old->matches($primary) ? $context->old->replaceIn($primary, $context->new) : null;
 
-            if (! $titleMatches && ! $urlMatches) {
+            if (! $context->old->matches($title) && $newUrl === null) {
                 continue;
             }
 
             $newTitle = $context->old->replaceIn($title, $context->new);
-            $newUrl = is_string($primary) ? $context->old->replaceIn($primary, $context->new) : null;
 
-            if (! $context->confirm("1Password: rename item [{$title}] to [{$newTitle}]".($urlMatches ? " and its URL to [{$newUrl}]" : '').'?')) {
-                continue;
-            }
-
-            $edit = ['op', 'item', 'edit', (string) $item['id'], '--title', $newTitle];
-
-            if ($urlMatches && $newUrl !== null) {
-                array_push($edit, '--url', $newUrl);
-            }
-
-            $context->run($edit);
-            $renamed++;
+            $candidates[(string) $item['id']] = [
+                'edit' => array_merge(['op', 'item', 'edit', (string) $item['id'], '--title', $newTitle], $newUrl !== null ? ['--url', $newUrl] : []),
+                'label' => "{$title} → {$newTitle}".($newUrl !== null ? "  ({$primary} → {$newUrl})" : ''),
+            ];
         }
 
-        if ($renamed === 0) {
+        if ($candidates === []) {
             $context->record('1Password: no items to rename');
+
+            return;
+        }
+
+        $selected = $context->choose(
+            '1Password: rename these items?',
+            array_map(fn ($candidate) => $candidate['label'], $candidates),
+            array_keys($candidates),
+        );
+
+        foreach ($candidates as $id => $candidate) {
+            if (in_array($id, $selected, true)) {
+                $context->run($candidate['edit']);
+            } else {
+                $context->record("1Password: kept [{$candidate['label']}]");
+            }
         }
     }
 }

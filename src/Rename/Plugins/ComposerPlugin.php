@@ -7,8 +7,9 @@ use Blemli\Partysan\Rename\RenameContext;
 use Illuminate\Support\Facades\File;
 
 /**
- * Rewrites the package name (and description) in composer.json, package.json and
- * package-lock.json without reformatting the files.
+ * Rewrites the package name, description and repository URLs (homepage, support,
+ * repository, bugs) in composer.json, package.json and package-lock.json without
+ * reformatting the files.
  */
 class ComposerPlugin extends BasePlugin
 {
@@ -29,8 +30,8 @@ class ComposerPlugin extends BasePlugin
 
     public function run(RenameContext $context): void
     {
-        $this->rewrite($context, 'composer.json', ['name', 'description']);
-        $this->rewrite($context, 'package.json', ['name', 'description']);
+        $this->rewrite($context, 'composer.json', ['name', 'description', 'homepage', 'support.source', 'support.issues', 'support.docs', 'support.wiki']);
+        $this->rewrite($context, 'package.json', ['name', 'description', 'homepage', 'repository', 'repository.url', 'bugs', 'bugs.url']);
         $this->rewrite($context, 'package-lock.json', ['name']);
     }
 
@@ -57,11 +58,13 @@ class ComposerPlugin extends BasePlugin
         $updated = $contents;
 
         foreach ($keys as $key) {
-            $value = $data[$key] ?? null;
+            $value = data_get($data, $key);
 
             if (! is_string($value) || ! $context->old->matches($value)) {
                 continue;
             }
+
+            $key = substr($key, (int) strrpos('.'.$key, '.'));
 
             $new = $context->old->replaceIn($value, $context->new);
 

@@ -2,12 +2,16 @@
 
 namespace Blemli\Partysan\Rename;
 
+use Blemli\Partysan\Console\SnippetMultiSelectPrompt;
+use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Console\View\Components\Factory;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Finder\Finder;
+
+use function Laravel\Prompts\multiselect;
 
 /**
  * Everything a rename plugin needs: the old and new name, the project path,
@@ -23,6 +27,11 @@ class RenameContext
 
     /** @var list<string>|null */
     protected ?array $files = null;
+
+    /**
+     * Where the project lives now; differs from basePath once the directory plugin ran.
+     */
+    public ?string $movedTo = null;
 
     /** @var list<string> */
     public const IGNORED_DIRECTORIES = ['.git', 'vendor', 'node_modules', 'storage', 'bootstrap/cache', 'public/build', 'public/hot', '.idea', '.vscode'];
@@ -62,6 +71,11 @@ class RenameContext
         return $relative === '' ? $this->basePath : $this->basePath.DIRECTORY_SEPARATOR.ltrim($relative, '/\\');
     }
 
+    public function currentPath(): string
+    {
+        return $this->movedTo ?? $this->basePath;
+    }
+
     public function relative(string $path): string
     {
         return ltrim(str_replace($this->basePath, '', $path), '/\\') ?: '.';
@@ -77,6 +91,31 @@ class RenameContext
         }
 
         return (bool) $this->io->confirm($question, $default);
+    }
+
+    /**
+     * Let the user tick which of several candidates to process. Everything is
+     * preselected; without interaction (--force, --no-interaction, --dry-run)
+     * $default is used as is.
+     *
+     * @param  array<string, string>  $options  key => label
+     * @param  list<string>  $default  keys preselected / used without interaction
+     * @param  (Closure(int|string|null): list<string>)|null  $snippet  coloured preview lines for the highlighted key
+     * @return list<string> selected keys
+     */
+    public function choose(string $question, array $options, array $default, ?Closure $snippet = null): array
+    {
+        if ($options === [] || ! $this->interactive()) {
+            return $default;
+        }
+
+        $hint = 'Space toggles an item, ctrl+a toggles all, enter confirms. Untick what should keep its name.';
+
+        $selected = $snippet === null
+            ? multiselect(label: $question, options: $options, default: $default, scroll: 15, hint: $hint)
+            : (new SnippetMultiSelectPrompt(label: $question, options: $options, snippet: $snippet, default: $default, scroll: 15, hint: $hint))->prompt();
+
+        return array_values(array_map('strval', $selected));
     }
 
     public function interactive(): bool

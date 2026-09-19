@@ -79,17 +79,21 @@ The command requires a clean git working tree (so `git checkout .` undoes the fi
 | plugin | what it does |
 |---|---|
 | `env` | rewrites the name in every `.env*` file: `APP_NAME` and derived values like `DB_DATABASE`, `APP_URL`, `SESSION_COOKIE`, `VITE_APP_NAME` |
-| `composer` | `name` and `description` in `composer.json`, `package.json` and `package-lock.json`, without reformatting them |
+| `composer` | `name`, `description` and repository URLs (`homepage`, `support.*`, `repository`, `bugs`) in `composer.json`, `package.json` and `package-lock.json`, without reformatting them |
+| `readme` | rewrites the README title when it is nothing but the old name; other mentions are left to `scan` |
 | `namespace` | renames the root PHP namespace when it is not the default `App`, then runs `composer dump-autoload` |
 | `kamal` | `config/deploy*.yml` and everything under `.kamal/` (service, image, hosts, volumes, secrets) |
-| `1password` | renames items whose title or URL carries the name via the `op` CLI (skipped when `op` is missing or signed out) |
+| `compose` | docker compose files; warns that compose derives container and volume names from the directory, with the commands to pin the project name or copy the volumes |
+| `1password` | lists items whose title or URL carries the name as a checkbox list (all ticked; untick what should keep its name) and renames the selected ones via the `op` CLI; skipped when `op` is missing or signed out |
 | `forge` | with a `FORGE_API_TOKEN`: renames matching Forge sites (domain, git repository, remote `.env`, deployment script) |
-| `github` | `gh repo rename`, which also updates the local `origin` remote |
-| `scan` | lists every remaining occurrence in tracked and untracked files (any casing) and offers to replace them file by file; also offers to rename files and directories carrying the name |
-| `caches` | `config:clear`, `route:clear`, `view:clear` so `bootstrap/cache` forgets the old name |
-| `directory` | renames the project directory as the very last step and prints the `cd` to run |
+| `ide` | PhpStorm `.idea/.name`, `.idea/<name>.iml` plus `modules.xml`, and VS Code `<name>.code-workspace` files, which are gitignored and therefore invisible to `scan` |
+| `github` | `gh repo rename`, then makes sure the local `origin` remote points at the new URL |
+| `scan` | lists every remaining occurrence in tracked and untracked files (any casing) with line numbers, then shows the files as a checkbox list (all ticked; untick what must keep the old name, ctrl+a toggles all) with a syntax-coloured preview of the highlighted file's matching lines plus one line of context underneath; `--force` and `--no-interaction` take the default and replace everything, `--dry-run` only reports; same for files and directories whose name carries the old name |
+| `caches` | `config:clear`, `route:clear`, `view:clear`, `event:clear`, `clear-compiled` so `bootstrap/cache` and compiled views forget the old name and path |
+| `directory` | renames the project directory and prints the `cd` to run |
+| `herd` | with Herd or Valet installed: a linked site is unlinked and linked again from the renamed directory; a parked site follows the directory name by itself. Either way, if `herd secured` listed the old site it is secured again, and an isolated PHP version (`herd isolated`) is isolated again under the new name |
 
-Finally a checklist of things it cannot do safely is printed: the database itself (mysql has no `RENAME DATABASE`; run `db:create` and migrate), kamal containers and volumes on the servers, the session cookie name (everyone is logged out), DNS and TLS, OAuth callback URLs, monitors, registries, IDE project files, binary assets and hosting dashboards such as Laravel Cloud.
+Finally a checklist of things it cannot do safely is printed: the database itself (mysql has no `RENAME DATABASE`; run `db:create` and migrate), kamal containers and volumes on the servers, the session cookie name (everyone is logged out), cache and queue prefixes (drain queues first), processes still running from the old directory, DNS and TLS, OAuth callback URLs, monitors, registries, IDE project files, binary assets and hosting dashboards such as Laravel Cloud.
 
 #### Rename plugins
 
@@ -99,7 +103,7 @@ Anything else that knows your app by name can be hooked in as a plugin. Implemen
 app(\Blemli\Partysan\Partysan::class)->renamePlugin(MyRegistryPlugin::class);
 ```
 
-A plugin gets a `RenameContext` with the old and new `AppName` (all spellings, `replaceIn()`, `matches()`), dry-run aware helpers (`replaceInFile()`, `put()`, `move()`, `run()`), `confirm()` that honours `--force`/`--no-interaction`, `record()` for the change log and `remind()` for the final checklist. `order()` decides when it runs (built-ins: 10 env … 900 scan, 950 caches, 1000 directory) and `applies()` lets it skip projects it does not concern. Plugins are addressed by `key()` in `--only`/`--without`.
+A plugin gets a `RenameContext` with the old and new `AppName` (all spellings, `replaceIn()`, `matches()`), dry-run aware helpers (`replaceInFile()`, `put()`, `move()`, `run()`), `confirm()` and `choose()` (a checkbox list) that honour `--force`/`--no-interaction`/`--dry-run`, `record()` for the change log and `remind()` for the final checklist. `order()` decides when it runs (built-ins: 10 env, 20 composer, 25 readme … 900 scan, 950 caches, 1000 directory, 1010 herd; plugins after the move read `$context->currentPath()`) and `applies()` lets it skip projects it does not concern. Plugins are addressed by `key()` in `--only`/`--without`.
 
 ### dependency:switch
 
