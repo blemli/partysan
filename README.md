@@ -20,7 +20,7 @@ just run `php artisan browse` and have fun.
 
 ## Commands
 
-`browse`, `dependency:switch`, `db:create`, `open`
+`browse`, `dependency:switch`, `db:create`, `open`, `rename`
 
 ### db:create
 
@@ -58,6 +58,48 @@ php artisan open --env=production
 ```
 
 With `--env=<environment>` the URL is read directly from `.env.<environment>` in the project root, so it works even when the config is cached. Fails with a clear error if the file does not exist or has no `APP_URL`.
+
+### rename
+
+Rename the app everywhere at once and get told about everything that is left:
+
+```bash
+php artisan rename "New App"                  # old name is read from APP_NAME
+php artisan rename new-app --from="Old App"   # when APP_NAME, directory and composer name disagree
+php artisan rename "New App" --dry-run        # show what would happen
+php artisan rename "New App" --only=env,composer
+php artisan rename "New App" --without=github,directory
+php artisan rename --plugins                  # list plugins and whether they apply here
+```
+
+Every spelling is handled: `My App`, `MyApp`, `my-app`, `my_app`, `myapp`, `MY_APP` and `my app` each become the matching spelling of the new name, matched as whole words only (`art` never touches `artisan`, but `MyAppServiceProvider` becomes `NewAppServiceProvider`).
+
+The command requires a clean git working tree (so `git checkout .` undoes the file changes) unless `--force` is given, and runs these plugins in order:
+
+| plugin | what it does |
+|---|---|
+| `env` | rewrites the name in every `.env*` file: `APP_NAME` and derived values like `DB_DATABASE`, `APP_URL`, `SESSION_COOKIE`, `VITE_APP_NAME` |
+| `composer` | `name` and `description` in `composer.json`, `package.json` and `package-lock.json`, without reformatting them |
+| `namespace` | renames the root PHP namespace when it is not the default `App`, then runs `composer dump-autoload` |
+| `kamal` | `config/deploy*.yml` and everything under `.kamal/` (service, image, hosts, volumes, secrets) |
+| `1password` | renames items whose title or URL carries the name via the `op` CLI (skipped when `op` is missing or signed out) |
+| `forge` | with a `FORGE_API_TOKEN`: renames matching Forge sites (domain, git repository, remote `.env`, deployment script) |
+| `github` | `gh repo rename`, which also updates the local `origin` remote |
+| `scan` | lists every remaining occurrence in tracked and untracked files (any casing) and offers to replace them file by file; also offers to rename files and directories carrying the name |
+| `caches` | `config:clear`, `route:clear`, `view:clear` so `bootstrap/cache` forgets the old name |
+| `directory` | renames the project directory as the very last step and prints the `cd` to run |
+
+Finally a checklist of things it cannot do safely is printed: the database itself (mysql has no `RENAME DATABASE`; run `db:create` and migrate), kamal containers and volumes on the servers, the session cookie name (everyone is logged out), DNS and TLS, OAuth callback URLs, monitors, registries, IDE project files, binary assets and hosting dashboards such as Laravel Cloud.
+
+#### Rename plugins
+
+Anything else that knows your app by name can be hooked in as a plugin. Implement `Blemli\Partysan\Rename\RenamePlugin` (or extend `BasePlugin`) and register it either in `config/partysan.php` under `rename.plugins`, or from a service provider:
+
+```php
+app(\Blemli\Partysan\Partysan::class)->renamePlugin(MyRegistryPlugin::class);
+```
+
+A plugin gets a `RenameContext` with the old and new `AppName` (all spellings, `replaceIn()`, `matches()`), dry-run aware helpers (`replaceInFile()`, `put()`, `move()`, `run()`), `confirm()` that honours `--force`/`--no-interaction`, `record()` for the change log and `remind()` for the final checklist. `order()` decides when it runs (built-ins: 10 env … 900 scan, 950 caches, 1000 directory) and `applies()` lets it skip projects it does not concern. Plugins are addressed by `key()` in `--only`/`--without`.
 
 ### dependency:switch
 
